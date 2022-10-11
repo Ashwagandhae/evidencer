@@ -2,7 +2,7 @@
 
 ![Screenshot](screenshots/main.jpg)
 
-A chrome extension that lets you scrape, highlight/underline, and export articles you see online as debate cards.
+A chrome extension that lets you scrape, highlight/underline, and export articles you see online as debate cards. Inspired by [Cardr](https://cardrdebate.com/).
 
 Based on [this template](https://github.com/NekitCorp/chrome-extension-svelte-typescript-boilerplate) by [@NekitCorp](https://github.com/NekitCorp).
 
