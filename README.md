@@ -1,38 +1,39 @@
 # Svelte Typescript Chrome Extension Boilerplate
 
-Boilerplate for Chrome Extension Svelte Typescript project
+An extension that lets you scrape, highlight/underline, and export articles you see online as debate cards.
 
-## Features
+Based off [this template](https://github.com/NekitCorp/chrome-extension-svelte-typescript-boilerplate) by [@NekitCorp](https://github.com/NekitCorp).
 
--   [Svelte](https://svelte.dev/)
--   [TypeScript](https://www.typescriptlang.org/)
--   [Vite](https://vitejs.dev/)
--   [Chrome Extensions Manifest V3](https://developer.chrome.com/docs/extensions/mv3/intro/)
+## Built with
 
-## Development
+- [Svelte](https://svelte.dev/)
+- [TypeScript](https://www.typescriptlang.org/)
+- [Vite](https://vitejs.dev/)
+- [Chrome Extensions Manifest V3](https://developer.chrome.com/docs/extensions/mv3/intro/)
+
+## Usage
+
+1. Build extension
 
 ```bash
 # install dependencies
 npm i
 
 # build files to `/dist` directory
-# vite.build.watch rebuilds when modules have changed on disk
-npm run dev
+npm run build
 ```
 
-## Build
+2. Open the Extension Management page by navigating to `chrome://extensions`.
+3. Enable Developer Mode by clicking the toggle switch next to `Developer mode`.
+4. Click the `LOAD UNPACKED` button and select the `/dist` directory.
+
+## Develop
 
 ```bash
+# install dependencies
+npm i
 # build files to `/dist` directory
-$ npm run build
+# vite.build.watch rebuilds when modules have changed on disk
+npm run dev
+
 ```
-
-## Load unpacked extensions
-
-[Getting Started Tutorial](https://developer.chrome.com/docs/extensions/mv3/getstarted/)
-
-1. Open the Extension Management page by navigating to `chrome://extensions`.
-2. Enable Developer Mode by clicking the toggle switch next to `Developer mode`.
-3. Click the `LOAD UNPACKED` button and select the `/dist` directory.
-
-![Example](https://wd.imgix.net/image/BhuKGJaIeLNPW9ehns59NfwqKxF2/vOu7iPbaapkALed96rzN.png?auto=format&w=571)
