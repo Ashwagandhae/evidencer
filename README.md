@@ -1,6 +1,6 @@
-# Svelte Typescript Chrome Extension Boilerplate
+# Evidencer
 
-An extension that lets you scrape, highlight/underline, and export articles you see online as debate cards.
+A chrome extension that lets you scrape, highlight/underline, and export articles you see online as debate cards.
 
 Based on [this template](https://github.com/NekitCorp/chrome-extension-svelte-typescript-boilerplate) by [@NekitCorp](https://github.com/NekitCorp).
 
