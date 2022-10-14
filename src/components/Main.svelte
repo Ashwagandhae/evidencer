@@ -108,17 +108,17 @@
             formatter={formatters.bigDate}
           />
         </span>
-        <Cite formatter={formatters.authors} />. <Cite
+        [<Cite formatter={formatters.authors} />. <Cite
           formatter={formatters.date}
         />. "<Cite formatter={formatters.title} />". <Cite
           formatter={formatters.siteName}
         />. <Cite formatter={formatters.url} />. <Cite
           formatter={formatters.accessDate}
-        />.
+        />.]
       </div>
       <div class="paras">
         <ParaTools bind:paras={$card.paras} floating={paraToolsFloating} />
-        <Paras paras={$card.paras} />
+        <Paras />
       </div>
     </div>
     {#if $currentEditor != null}
@@ -165,22 +165,24 @@
     --shadow: rgba(0, 0, 0, 0.4) 0px 5px 15px;
   }
   :global(body) {
-    --background-secondary: hsl(201, 50%, 94%);
+    --background-secondary: hsl(210, 50%, 94%);
     --background-select-weak-secondary: hsl(201, 60%, 86%);
     --background-select-secondary: hsl(201, 70%, 82%);
+    --background-error-weak-secondary: hsl(0, 60%, 86%);
+    --background-error-secondary: hsl(0, 70%, 80%);
 
-    --background: hsl(222, 10%, 100%);
+    --background: hsl(210, 10%, 100%);
     --background-select-weak: hsl(201, 80%, 90%);
     --background-select: hsl(201, 80%, 80%);
-
     --background-error-weak: hsl(0, 80%, 90%);
     --background-error: hsl(0, 80%, 80%);
-    --background-highlight: hsl(60, 100%, 70%);
+
+    --background-highlight: hsl(55, 90%, 60%);
     --text-hover: hsl(201, 80%, 60%);
     --text-hover-weak: hsl(201, 50%, 65%);
     --text-error-weak: hsl(0, 50%, 65%);
     --text-error: hsl(0, 80%, 60%);
-    --text-weak: hsl(0, 0%, 60%);
+    --text-weak: hsl(210, 10%, 60%);
     --text: hsl(0, 0%, 15%);
     --text-strong: hsl(0, 0%, 0%);
     --shadow-big: rgba(0, 0, 0, 0.35) 0px 0px 15px;

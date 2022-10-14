@@ -5,7 +5,7 @@ export function copyCard(card: ICard): void {
   let title = document.createElement('h3');
   title.textContent = card.tag;
   title.style.fontFamily = 'Calibri';
-  title.style.margin = '0px';
+  title.style.margin = '13pt';
   html.appendChild(title);
 
   let cite = document.createElement('p');
@@ -16,23 +16,26 @@ export function copyCard(card: ICard): void {
   bigCitePart.textContent = `${formatters.bigAuthors.format(
     card
   )}, ${formatters.bigDate.format(card)} `;
-  bigCitePart.style.fontSize = '1.5em';
+  bigCitePart.style.fontSize = '13pt';
   bigCitePart.style.fontWeight = 'bold';
   cite.appendChild(bigCitePart);
 
   let smallCitePart = document.createElement('span');
-  smallCitePart.textContent = `${formatters.authors.format(
+  smallCitePart.textContent = `[${formatters.authors.format(
     card
   )}. ${formatters.date.format(card)}. "${formatters.title.format(
     card
   )}". ${formatters.siteName.format(card)}. ${formatters.url.format(
     card
-  )}. ${formatters.accessDate.format(card)}`;
+  )}. ${formatters.accessDate.format(card)}]`;
+  smallCitePart.style.fontSize = '11pt';
+
   cite.appendChild(smallCitePart);
   html.appendChild(cite);
   for (let para of card.paras) {
     let p = document.createElement('p');
     p.style.fontFamily = 'Calibri';
+    p.style.fontSize = '11pt';
     p.style.margin = '1em 0';
     p.style.lineHeight = '1.5em';
 
@@ -48,6 +51,8 @@ export function copyCard(card: ICard): void {
       p.appendChild(s);
     }
     html.appendChild(p);
+    console.log(para);
+    console.log(p);
   }
   copyHtmlToClipboard(html);
 }

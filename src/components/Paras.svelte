@@ -3,14 +3,11 @@
   import { onMount } from 'svelte';
   import { getContext } from 'svelte';
   import type { Writable } from 'svelte/store';
+  import type { ICard, IPara, IRun } from '../types';
 
   let currentTool: Writable<null | 'highlight' | 'underline' | 'eraser'> =
     getContext('currentTool');
-  export let paras: {
-    text: string;
-    underline: boolean;
-    highlight: boolean;
-  }[][];
+  let card: Writable<ICard> = getContext('card');
   let parentElement: HTMLElement;
 
   // converts text nodes/span nodes/p nodes all to span, so that it is normalized
@@ -56,9 +53,10 @@
     let endSpanIndex = Array.from(endP.children).indexOf(endSpan);
 
     let changeRunIndexes: [number, number][] = [];
+    let newParas = [...$card.paras];
     // if highlight start and highlight end are in the same run
     if (startPIndex == endPIndex && startSpanIndex == endSpanIndex) {
-      let run = paras[startPIndex][startSpanIndex];
+      let run = newParas[startPIndex][startSpanIndex];
       let run1 = { ...run };
       let run2 = { ...run };
       let run3 = { ...run };
@@ -66,53 +64,53 @@
       run2.text = run.text.slice(startOffset, endOffset);
       run3.text = run.text.slice(endOffset);
       changeRunIndexes.push([startPIndex, startSpanIndex + 1]);
-      paras[startPIndex] = [
-        ...paras[startPIndex].slice(0, startSpanIndex),
+      newParas[startPIndex] = [
+        ...newParas[startPIndex].slice(0, startSpanIndex),
         run1,
         run2,
         run3,
-        ...paras[startPIndex].slice(startSpanIndex + 1),
+        ...newParas[startPIndex].slice(startSpanIndex + 1),
       ];
     }
     // else do them individually
     else {
       // highlight start
-      let run = paras[startPIndex][startSpanIndex];
+      let run = newParas[startPIndex][startSpanIndex];
       console.log('startRun', run);
       let run1 = { ...run };
       let run2 = { ...run };
       run1.text = run.text.slice(0, startOffset);
       run2.text = run.text.slice(startOffset);
       changeRunIndexes.push([startPIndex, startSpanIndex + 1]);
-      paras[startPIndex] = [
-        ...paras[startPIndex].slice(0, startSpanIndex),
+      newParas[startPIndex] = [
+        ...newParas[startPIndex].slice(0, startSpanIndex),
         run1,
         run2,
-        ...paras[startPIndex].slice(startSpanIndex + 1),
+        ...newParas[startPIndex].slice(startSpanIndex + 1),
       ];
       // if both spans are in the same para, increase endSpanIndex by 1
       if (startPIndex == endPIndex) {
         endSpanIndex += 1;
       }
       // highlight end
-      run = paras[endPIndex][endSpanIndex];
+      run = newParas[endPIndex][endSpanIndex];
       run1 = { ...run };
       run2 = { ...run };
       run1.text = run.text.slice(0, endOffset);
       run2.text = run.text.slice(endOffset);
       changeRunIndexes.push([endPIndex, endSpanIndex]);
 
-      paras[endPIndex] = [
-        ...paras[endPIndex].slice(0, endSpanIndex),
+      newParas[endPIndex] = [
+        ...newParas[endPIndex].slice(0, endSpanIndex),
         run1,
         run2,
-        ...paras[endPIndex].slice(endSpanIndex + 1),
+        ...newParas[endPIndex].slice(endSpanIndex + 1),
       ];
       // increase endSpanIndex by 1
       endSpanIndex += 1;
       // highlight middle
       for (let i = startPIndex; i < endPIndex + 1; i++) {
-        for (let j = 0; j < paras[i].length; j++) {
+        for (let j = 0; j < newParas[i].length; j++) {
           if (i == startPIndex && j < startSpanIndex + 1) continue;
           if (i == endPIndex && j > endSpanIndex - 1) continue;
           changeRunIndexes.push([i, j]);
@@ -122,10 +120,10 @@
     // check if all the runs are already highlighted
     let allHighlighted = true;
     for (let [i, j] of changeRunIndexes) {
-      if (!paras[i][j][$currentTool]) {
+      if (!newParas[i][j][$currentTool]) {
         if ($currentTool == 'eraser') {
-          paras[i][j].highlight = false;
-          paras[i][j].underline = false;
+          newParas[i][j].highlight = false;
+          newParas[i][j].underline = false;
         } else {
           allHighlighted = false;
           break;
@@ -136,46 +134,42 @@
       for (let [i, j] of changeRunIndexes) {
         // if all highlighted, unhighlight
         if (allHighlighted) {
-          paras[i][j][$currentTool] = false;
+          newParas[i][j][$currentTool] = false;
         }
         // else highlight
         else {
-          paras[i][j][$currentTool] = true;
+          newParas[i][j][$currentTool] = true;
         }
       }
     }
 
     selection.empty();
     // combine simialar runs
-    paras = paras.map(function (para) {
-      let newPara: {
-        text: string;
-        underline: boolean;
-        highlight: boolean;
-      }[] = [];
-      let prevRun: {
-        text: string;
-        underline: boolean;
-        highlight: boolean;
-      } = null;
-      for (let run of para) {
-        if (prevRun == null) {
-          prevRun = run;
-        } else if (
-          prevRun.underline == run.underline &&
-          prevRun.highlight == run.highlight
+    console.log(newParas);
+    newParas = newParas.map(function (para) {
+      let newPara: IPara = [];
+      if (para.length == 0) return [];
+      let prevRun = { ...para[0] };
+      for (let i = 1; i < para.length; i++) {
+        let run = para[i];
+        if (run.text.length == 0) {
+          continue;
+        }
+        if (
+          run.highlight == prevRun.highlight &&
+          run.underline == prevRun.underline
         ) {
-          prevRun.text += run.text;
+          prevRun.text = prevRun.text.concat(run.text);
         } else {
-          newPara.push(prevRun);
-          prevRun = run;
+          newPara.push({ ...prevRun });
+          prevRun = { ...run };
         }
       }
-      if (prevRun != null) {
-        newPara.push(prevRun);
-      }
+      newPara.push({ ...prevRun });
+
       return newPara;
     });
+    $card.paras = newParas;
   }
 
   onMount(function () {
@@ -184,7 +178,7 @@
 </script>
 
 <article bind:this={parentElement}>
-  {#each paras as runs}
-    <Para {runs} />
+  {#each $card.paras as para}
+    <Para runs={para} />
   {/each}
 </article>

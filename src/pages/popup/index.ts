@@ -1,11 +1,11 @@
-import Options from 'src/components/Options.svelte';
+import Main from 'src/components/Main.svelte';
 import type { IStorage } from 'src/types';
 
-function restoreOptions() {
-  const app = new Options({
+function restoreMain() {
+  const app = new Main({
     target: document.body,
     props: { context: 'popup' },
   });
 }
 
-document.addEventListener('DOMContentLoaded', restoreOptions);
+document.addEventListener('DOMContentLoaded', restoreMain);
