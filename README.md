@@ -16,27 +16,49 @@ Based on [this template](https://github.com/NekitCorp/chrome-extension-svelte-ty
 
 ## Usage
 
-1. Build extension
+### Simple install
+
+1. Go to [releases](https://github.com/Ashwagandhae/evidencer/releases/) and download `Evidencer.crx`.
+2. Open the Extension Management page by navigating to `chrome://extensions`.
+3. Drag `Evidencer.crx` on the page and click `Add Extension`.
+4. Reload any websites that you want to use with the extension.
+
+### Unpacked install
+
+1. Go to [releases](https://github.com/Ashwagandhae/evidencer/releases/) and download `EvidencerUnpacked.zip`, and unzip the file.
+2. Open the Extension Management page by navigating to `chrome://extensions`.
+3. Enable developer mode by clicking the toggle switch next to `Developer mode`.
+4. Click the `Load unpacked` button and select the unzipped `EvidencerUnpacked` folder.
+5. Reload any websites that you want to use with the extension.
+
+### Build from source
+
+1. Clone the repository and build the extension.
 
 ```bash
+# download repo
+git clone https://github.com/Ashwagandhae/evidencer.git
+cd evidencer
 # install dependencies
 npm i
-
-# build files to `/dist` directory
+# build files to `/dist` folder
 npm run build
 ```
 
 2. Open the Extension Management page by navigating to `chrome://extensions`.
-3. Enable Developer Mode by clicking the toggle switch next to `Developer mode`.
-4. Click the `LOAD UNPACKED` button and select the `/dist` directory.
+3. Enable developer mode by clicking the toggle switch next to `Developer mode`.
+4. Click the `Load unpacked` button and select the `dist` folder.
+5. Reload any websites that you want to use with the extension.
 
 ## Develop
 
 ```bash
+# download repo
+git clone https://github.com/Ashwagandhae/evidencer.git
+cd evidencer
 # install dependencies
 npm i
 # build files to `/dist` directory
 # vite.build.watch rebuilds when modules have changed on disk
 npm run dev
-
 ```
