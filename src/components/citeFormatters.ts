@@ -120,7 +120,6 @@ export let formatters: { [key: string]: IFormatter } = {
     format: function (card: ICard) {
       let ret: string | null = null;
       let valid = validateDate(card.accessDate);
-      console.log('validity', card.accessDate, valid);
       if (!(valid.month && valid.day && valid.year)) {
         return ret;
       }

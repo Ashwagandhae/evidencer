@@ -2,16 +2,21 @@
   import { onMount } from 'svelte';
   import type { ICard } from '../../types';
   import { validateDate } from '../citeFormatters';
-  export let card: ICard;
+  import type { Writable } from 'svelte/store';
+  import { getContext } from 'svelte';
+  import type { EditHistory } from '../history';
+
   export let key: string;
+  const card: Writable<ICard> = getContext('card');
+  const history: EditHistory = getContext('history');
 
   let validMonth: boolean;
   let validDay: boolean;
   let validYear: boolean;
 
-  let month: string = card[key].month;
-  let day: string = card[key].day;
-  let year: string = card[key].year;
+  let month: string = $card[key].month;
+  let day: string = $card[key].day;
+  let year: string = $card[key].year;
 
   function cleanInput(string: string) {
     // remove all non-numbers
@@ -20,29 +25,42 @@
     }
     return string.replace(/\D/g, '');
   }
+  function updateDate() {
+    history.action('editDate', {
+      key: key,
+      date: {
+        month: month,
+        day: day,
+        year: year,
+      },
+    });
+  }
   function monthChange() {
     month = cleanInput(month);
-    card[key].month = month;
+    updateDate();
   }
   $: month, monthChange();
   function dayChange() {
     day = cleanInput(day);
-    card[key].day = day;
+    updateDate();
   }
   $: day, dayChange();
   function yearChange() {
     year = cleanInput(year);
-    card[key].year = year;
+    updateDate();
   }
   $: year, yearChange();
 
   function validate() {
-    let valid = validateDate(card[key]);
+    let valid = validateDate($card[key]);
     validMonth = valid.month;
     validDay = valid.day;
     validYear = valid.year;
+    month = $card[key].month;
+    day = $card[key].day;
+    year = $card[key].year;
   }
-  $: card[key], validate();
+  $: $card[key], validate();
 
   let monthInput: HTMLElement;
   let dayInput: HTMLElement;
@@ -72,6 +90,7 @@
     placeholder={'Month'}
     bind:this={monthInput}
     on:keydown={monthKeydown}
+    on:blur={() => history.preventExtension()}
   />
   <input
     type="text"
@@ -80,6 +99,7 @@
     placeholder={'Date'}
     bind:this={dayInput}
     on:keydown={dayKeydown}
+    on:blur={() => history.preventExtension()}
   />
   <input
     type="text"
@@ -87,6 +107,7 @@
     bind:value={year}
     placeholder={'Year'}
     bind:this={yearInput}
+    on:blur={() => history.preventExtension()}
   />
 </div>
 
@@ -115,6 +136,7 @@
     padding: var(--padding);
     background: var(--background-select-weak-secondary);
     color: var(--text);
+    transition: background var(--transition-duration);
   }
   input.invalid {
     background: var(--background-error-weak-secondary);
@@ -124,5 +146,12 @@
   }
   input.invalid::placeholder {
     color: var(--text-error-weak);
+  }
+  input:focus {
+    background: var(--background-select-secondary);
+    color: var(--text-strong);
+  }
+  input.invalid:focus {
+    background: var(--background-error-secondary);
   }
 </style>

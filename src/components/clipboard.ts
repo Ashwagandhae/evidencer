@@ -1,6 +1,6 @@
 import type { ICard } from '../types';
 import { formatters } from './citeFormatters';
-export function copyCard(card: ICard): void {
+export function copyCard(card: ICard, shrunk = false): void {
   let html = document.createElement('div');
   let title = document.createElement('h3');
   title.textContent = card.tag;
@@ -45,14 +45,15 @@ export function copyCard(card: ICard): void {
       if (span.underline) {
         s.style.textDecoration = 'underline';
       }
+      if (!span.underline && shrunk) {
+        s.style.fontSize = '8pt';
+      }
       if (span.highlight) {
         s.style.backgroundColor = 'yellow';
       }
       p.appendChild(s);
     }
     html.appendChild(p);
-    console.log(para);
-    console.log(p);
   }
   copyHtmlToClipboard(html);
 }

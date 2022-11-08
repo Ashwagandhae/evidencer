@@ -4,7 +4,7 @@
   import type { Writable } from 'svelte/store';
   import { citeLabels } from './labels';
 
-  let card: Writable<ICard> = getContext('card');
+  const card: Writable<ICard> = getContext('card');
   let currentEditor: Writable<string | null> = getContext('currentEditor');
   export let formatter: IFormatter;
 
@@ -35,6 +35,7 @@
     cursor: default;
     word-wrap: break-word;
     border-radius: var(--radius);
+    transition: background var(--transition-duration);
   }
   span:hover {
     background: var(--background-select-weak-secondary);

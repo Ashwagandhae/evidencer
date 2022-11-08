@@ -176,7 +176,6 @@ function getDate() {
 }
 
 chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
-  console.log('scraping page');
   let documentCopy = document.cloneNode(true);
   let article = new Readability(documentCopy, {
     debug: false,
@@ -194,6 +193,7 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
     name: string;
     isPerson: boolean;
     description: string | null;
+    id: number;
   }[] = [];
   if (authorString) {
     // remove whitespace
@@ -215,7 +215,7 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
 
         return true;
       })
-      .map((authorName) => {
+      .map((authorName, index) => {
         let isPerson = true;
         // check if author is a person
         // if author name includes acronym
@@ -228,7 +228,7 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
         }
         // if author name includes a word that is not a name
 
-        return { name: authorName, isPerson, description: null };
+        return { name: authorName, isPerson, description: null, id: index };
       });
   }
 
@@ -273,7 +273,7 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
       .filter((para) => validPara(para));
   }
   let paras = paraStrings.map((para) => {
-    return [{ text: para, highlight: false, underline: false }];
+    return [{ text: para.trim(), highlight: false, underline: false }];
   });
 
   const currentDate = new Date();

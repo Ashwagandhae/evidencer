@@ -15,7 +15,6 @@
 
 <style>
   p {
-    line-height: 1.6em;
     margin: 0;
     margin-bottom: 1rem;
   }

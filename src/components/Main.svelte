@@ -6,6 +6,7 @@
   import { writable } from 'svelte/store';
   import type { Writable } from 'svelte/store';
   import { formatters } from './citeFormatters';
+  import { EditHistory } from './history';
   import Text from './Text.svelte';
   import Cite from './Cite.svelte';
   import CiteEditor from './CiteEditor.svelte';
@@ -14,18 +15,32 @@
   import Icon from './Icon.svelte';
   import Button from './Button.svelte';
   import ButtonGroup from './ButtonGroup.svelte';
+  import Messages from './Messages.svelte';
+  import { createTransition, transitionDuration } from './transition';
+  import { messenger } from './stores';
 
   export let context: 'popup' | 'popout' | 'options';
-  let card: Writable<ICard> = writable(null);
-  setContext('card', card);
-  let currentTool: Writable<null | 'highlight' | 'underline'> = writable(null);
+
+  let currentTool: Writable<null | 'highlight' | 'underline' | 'eraser'> =
+    writable(null);
   setContext('currentTool', currentTool);
   let currentEditor: Writable<string | null> = writable(null);
   setContext('currentEditor', currentEditor);
+  let shrunk = false;
+
+  let card: Writable<ICard> = writable(null);
+  setContext('card', card);
+  let history = new EditHistory(card);
+  setContext('history', history);
 
   function requestCardData() {
-    chrome.runtime.sendMessage({ message: 'getCardData' }, function (response) {
-      $card = response.card;
+    return new Promise<ICard>((resolve, reject) => {
+      chrome.runtime.sendMessage(
+        { message: 'getCardData' },
+        function (response) {
+          resolve(response.card);
+        }
+      );
     });
   }
   let cardElement: HTMLElement;
@@ -78,18 +93,92 @@
 
   let tagText: SvelteComponent;
   onMount(function () {
-    requestCardData();
+    requestCardData().then((cardData: ICard) => {
+      card.set(cardData);
+    });
   });
+  function handleKeydown(e: KeyboardEvent) {
+    if (e.key == 'z' && (e.metaKey || e.ctrlKey) && e.shiftKey) {
+      e.preventDefault();
+      e.stopPropagation();
+      history.redo();
+    } else if (e.key == 'z' && (e.metaKey || e.ctrlKey)) {
+      e.preventDefault();
+      e.stopPropagation();
+      history.undo();
+    }
+    // if not typing in textarea or input
+    if (
+      e.target instanceof HTMLTextAreaElement ||
+      e.target instanceof HTMLInputElement
+    ) {
+      return;
+    }
+    if (e.key == 'p' && !(e.metaKey || e.ctrlKey || e.shiftKey)) {
+      e.preventDefault();
+      e.stopPropagation();
+      $currentTool = null;
+    }
+    if (e.key == 'h' && !(e.metaKey || e.ctrlKey || e.shiftKey)) {
+      e.preventDefault();
+      e.stopPropagation();
+      $currentTool = 'highlight';
+    } else if (e.key == 'u' && !(e.metaKey || e.ctrlKey || e.shiftKey)) {
+      e.preventDefault();
+      e.stopPropagation();
+      $currentTool = 'underline';
+    } else if (e.key == 'e' && !(e.metaKey || e.ctrlKey || e.shiftKey)) {
+      e.preventDefault();
+      e.stopPropagation();
+      $currentTool = 'eraser';
+    }
+  }
+  async function animateReload() {
+    let animateTime = new Promise((resolve, reject) => {
+      setTimeout(resolve, transitionDuration * 2);
+    });
+    cardElement.classList.remove('animateEndReload');
+    cardElement.classList.add('animateStartReload');
+    // trigger reflow
+    cardElement.offsetWidth;
+    Promise.all([animateTime, requestCardData()]).then(
+      ([_, cardData]: [any, ICard]) => {
+        messenger.addMessage('Card reset!');
+
+        card.set(cardData);
+        // scroll to top
+        cardElement.scrollTop = 0;
+
+        cardElement.classList.remove('animateStartReload');
+        cardElement.classList.add('animateEndReload');
+        // trigger reflow
+        cardElement.offsetWidth;
+      }
+    );
+  }
 </script>
 
+<svelte:window on:keydown={handleKeydown} />
+
 <div class="container" class:fixedWidth={context == 'popup'}>
+  <Messages />
   <div class="buttons levelOne">
     <ButtonGroup floating={buttonsFloating}>
       {#if context == 'popup'}
-        <Button on:click={popoutWindow}><Icon name="popout" /></Button>
+        <Button on:click={popoutWindow} tooltip={'Popout'}
+          ><Icon name="popout" /></Button
+        >
       {/if}
-      <Button on:click={() => copyCard($card)}><Icon name="copy" /></Button>
-      <Button on:click={requestCardData}><Icon name="reload" /></Button>
+      <Button
+        tooltip={'Copy card'}
+        on:click={() => {
+          copyCard($card, shrunk);
+          messenger.addMessage('Copied to clipboard!');
+        }}><Icon name="copy" /></Button
+      >
+      <Button on:click={animateReload} tooltip={'Reset card'}
+        ><Icon name="reload" /></Button
+      >
     </ButtonGroup>
   </div>
   {#if $card}
@@ -117,8 +206,12 @@
         />.]
       </div>
       <div class="paras">
-        <ParaTools bind:paras={$card.paras} floating={paraToolsFloating} />
-        <Paras />
+        <ParaTools
+          paras={$card.paras}
+          floating={paraToolsFloating}
+          bind:shrunk
+        />
+        <Paras {shrunk} />
       </div>
     </div>
     {#if $currentEditor != null}
@@ -133,11 +226,17 @@
       Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
   }
   :global(body) {
+    --padding-small: 4px;
     --padding: 8px;
     --padding-big: 16px;
     --radius: 8px;
     --radius-big: 16px;
-    --transition-duration: 0.2s;
+    --transition-duration: 200ms;
+  }
+  @media (prefers-reduced-motion) {
+    :global(body) {
+      --transition-duration: 0ms;
+    }
   }
 
   :global(body.dark) {
@@ -152,6 +251,10 @@
     --background-select: hsl(201, 40%, 35%);
     --background-error-weak: hsl(0, 20%, 30%);
     --background-error: hsl(0, 40%, 35%);
+
+    --background-tooltip: hsl(0, 0%, 0%);
+    --text-tooltip: hsl(209, 30%, 80%);
+    --text-tooltip-weak: hsl(222, 12%, 50%);
 
     --background-highlight: hsl(60, 25%, 30%);
     --text-hover: hsl(201, 80%, 80%);
@@ -177,6 +280,11 @@
     --background-error-weak: hsl(0, 80%, 90%);
     --background-error: hsl(0, 80%, 80%);
 
+    --background-tooltip: hsl(222, 10%, 30%);
+
+    --text-tooltip: hsl(209, 30%, 90%);
+    --text-tooltip-weak: hsl(222, 10%, 70%);
+
     --background-highlight: hsl(55, 90%, 60%);
     --text-hover: hsl(201, 80%, 60%);
     --text-hover-weak: hsl(201, 50%, 65%);
@@ -192,7 +300,7 @@
     /* use apple font */
     font-family: var(--font-family);
     margin: 0;
-    font-size: 1em;
+    font-size: 1rem;
     color: var(--text);
     background: var(--background);
   }
@@ -213,6 +321,10 @@
     height: 100vh;
     position: relative;
     background-color: var(--background);
+    overflow: hidden;
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
   }
   .container.fixedWidth {
     width: 400px;
@@ -229,6 +341,29 @@
     display: flex;
     flex-direction: column;
     gap: var(--padding);
+  }
+  @keyframes start-reload {
+    0% {
+      transform: translateX(0);
+    }
+    100% {
+      transform: translateX(-100%) scale(0.7);
+    }
+  }
+  @keyframes end-reload {
+    0% {
+      transform: translateX(100%) scale(0.7);
+    }
+    100% {
+      transform: none;
+    }
+  }
+  .card:global(.animateStartReload) {
+    animation: start-reload calc(var(--transition-duration) * 2) ease;
+    transform: translateX(-100%) scale(0.7);
+  }
+  .card:global(.animateEndReload) {
+    animation: end-reload calc(var(--transition-duration) * 2) ease;
   }
   .tag {
     font-size: 1.2em;

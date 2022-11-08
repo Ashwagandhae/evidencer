@@ -1,28 +1,82 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
+  import { onMount, getContext } from 'svelte';
+  import type { EditHistory } from '../history';
+  import Icon from '../Icon.svelte';
+  import Button from '../Button.svelte';
+  import { createTransition } from '../transition';
 
-  export let deleteSelf: () => void;
+  export let author: {
+    name: string;
+    isPerson: boolean;
+    description: string;
+    id: number;
+  };
+  export let index: number;
 
-  export let author: { name: string; isPerson: boolean; description: string };
-  let nameElement: HTMLElement;
+  const history: EditHistory = getContext('history');
+
+  let nameElement: HTMLInputElement;
+  let isPersonElement: HTMLInputElement;
   onMount(function () {
     if (author.name == '') {
       nameElement.focus();
     }
   });
+  function deleteSelf() {
+    history.action('deleteAuthor', {
+      index: index,
+    });
+  }
+  function editAuthor() {
+    history.action('editAuthor', {
+      index: index,
+      author: {
+        name: nameElement.value,
+        isPerson: isPersonElement.value,
+        description: null,
+        id: author.id,
+      },
+    });
+  }
+  let transition = createTransition(
+    // clip-path: inset(0 0 ${(1 - eased) * 100}% 0);
+    (t, eased, info) => {
+      return `
+      transform: scale(${eased * 100}%);
+      height: ${eased * info}px; 
+    `;
+    },
+    'sineOut',
+    {
+      preRun: (node: HTMLElement) => {
+        return node.offsetHeight;
+      },
+    }
+  );
 </script>
 
-<div class="top">
-  <input bind:this={nameElement} type="text" bind:value={author.name} />
+<div class="top" transition:transition|local>
+  <input
+    bind:this={nameElement}
+    type="text"
+    on:input={editAuthor}
+    value={author.name}
+    on:blur={() => history.preventExtension()}
+  />
   <div class="right">
-    <input type="checkbox" hidden bind:checked={author.isPerson} />
-    <button
-      class="isPerson"
-      on:click={() => (author.isPerson = !author.isPerson)}
-    >
-      {#if author.isPerson}Person{:else}Organization{/if}
-    </button>
-    <button class="delete" on:click={deleteSelf}>Delete</button>
+    <input
+      type="checkbox"
+      hidden
+      bind:this={isPersonElement}
+      on:input={editAuthor}
+      value={author.isPerson}
+    />
+    <Button on:click={() => (author.isPerson = !author.isPerson)}>
+      {#if author.isPerson}<Icon name="person" />{:else}<Icon
+          name="organization"
+        />{/if}
+    </Button>
+    <Button on:click={deleteSelf}><Icon name="delete" /></Button>
   </div>
 </div>
 
@@ -42,6 +96,8 @@
     justify-content: space-between;
     gap: var(--padding);
     color: var(--text);
+
+    overflow: hidden;
   }
   div.right {
     position: relative;
@@ -58,36 +114,18 @@
     display: block;
     box-sizing: border-box;
     position: relative;
-    width: 50%;
+    width: 100%;
     font-size: inherit;
     font-weight: inherit;
     font-family: inherit;
-    background: none;
     background: var(--background-select-weak-secondary);
     border-radius: var(--padding);
     padding: var(--padding);
     color: var(--text);
+    transition: background var(--transition-duration);
   }
-  button {
-    border: none;
-    outline: none;
-    display: block;
-    box-sizing: border-box;
-    position: relative;
-    font-size: inherit;
-    font-weight: inherit;
-    font-family: inherit;
-    background: none;
-    cursor: pointer;
-    white-space: nowrap;
-    color: var(--text);
-  }
-  .isPerson {
-    background: var(--background-select-weak-secondary);
-    border-radius: var(--padding);
-    padding: var(--padding);
-  }
-  .isPerson:active {
+  input[type='text']:focus {
     background: var(--background-select-secondary);
+    color: var(--text-strong);
   }
 </style>

@@ -8,6 +8,7 @@ export type ICard = {
     name: string;
     isPerson: boolean;
     description: string | null;
+    id: number;
   }[];
   date: {
     month: string;
@@ -30,7 +31,18 @@ export type IRun = {
   highlight: boolean;
 };
 
+export type ITooltipInfo = {
+  content?: string;
+  disabled?: boolean;
+  layout?: string;
+  exist?: boolean;
+};
 export type IFormatter = {
   key: string;
   format: (card: ICard) => string | null;
+};
+
+export type IMessage = {
+  text: string;
+  id: number;
 };

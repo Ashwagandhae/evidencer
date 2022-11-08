@@ -1,6 +1,25 @@
 <script lang="ts">
+  import type { ITooltipInfo } from '../types';
+  import Tooltip from './Tooltip.svelte';
+  import Icon from './Icon.svelte';
   export let selected: boolean = false;
   export let disabled: boolean = false;
+  export let tooltip: null | string | ITooltipInfo = null;
+  let tooltipInfo: ITooltipInfo;
+  function setTooltipInfo() {
+    console.log('bruh');
+    if (tooltip == null) {
+      tooltipInfo = { exist: false };
+    } else if (typeof tooltip == 'string') {
+      tooltipInfo = { content: tooltip };
+    } else {
+      tooltipInfo = tooltip;
+    }
+    if (disabled && !tooltipInfo.hasOwnProperty('disabled')) {
+      tooltipInfo.disabled = true;
+    }
+  }
+  $: disabled, tooltip, setTooltipInfo();
 
   let element: HTMLElement;
   function animateClick() {
@@ -8,6 +27,9 @@
     // trigger reflow
     void element.offsetWidth;
     element.classList.add('clicked');
+  }
+  async function handleClick() {
+    animateClick();
   }
   function animateHover() {
     element.classList.remove('hovered');
@@ -17,16 +39,18 @@
   }
 </script>
 
-<button
-  bind:this={element}
-  on:click
-  class:selected
-  {disabled}
-  on:click={animateClick}
-  on:mouseenter={animateHover}
->
-  <slot />
-</button>
+<Tooltip {...tooltipInfo}>
+  <button
+    bind:this={element}
+    on:click
+    class:selected
+    {disabled}
+    on:click={handleClick}
+    on:mouseenter={animateHover}
+  >
+    <slot />
+  </button>
+</Tooltip>
 
 <style>
   button {

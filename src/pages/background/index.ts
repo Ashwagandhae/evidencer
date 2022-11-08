@@ -19,6 +19,5 @@ async function handleResponse(
         });
       }
     });
-    console.log('amon gus');
   }
 }

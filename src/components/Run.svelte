@@ -1,6 +1,6 @@
 <script lang="ts">
   import { getContext } from 'svelte';
-  import type { Writable } from 'svelte/store';
+  import type { Readable, Writable } from 'svelte/store';
   let currentTool: Writable<null | 'highlight' | 'underline' | 'eraser'> =
     getContext('currentTool');
   export let run: {
@@ -20,6 +20,8 @@
   span {
     white-space: pre-wrap;
     transition: background 0.1s;
+    line-height: 1.6em;
+    transition: font-size var(--transition-duration);
   }
   .underline {
     text-decoration: underline;
@@ -31,5 +33,8 @@
   }
   span::selection {
     background-color: var(--background-select);
+  }
+  :global(.shrunk) span:not(.underline) {
+    font-size: 0.5rem;
   }
 </style>

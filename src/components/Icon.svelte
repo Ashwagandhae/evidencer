@@ -7,6 +7,11 @@
   import EraserIcon from './icons/EraserIcon.svelte';
   import MergeIcon from './icons/MergeIcon.svelte';
   import ReloadIcon from './icons/ReloadIcon.svelte';
+  import ShrinkIcon from './icons/ShrinkIcon.svelte';
+  import PersonIcon from './icons/PersonIcon.svelte';
+  import OrganizationIcon from './icons/OrganizationIcon.svelte';
+  import DeleteIcon from './icons/DeleteIcon.svelte';
+  import CheckIcon from './icons/CheckIcon.svelte';
   let icons = {
     copy: CopyIcon,
     popout: PopoutIcon,
@@ -16,6 +21,11 @@
     eraser: EraserIcon,
     merge: MergeIcon,
     reload: ReloadIcon,
+    shrink: ShrinkIcon,
+    person: PersonIcon,
+    organization: OrganizationIcon,
+    delete: DeleteIcon,
+    check: CheckIcon,
   };
   export let name: string;
 </script>

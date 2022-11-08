@@ -2,15 +2,26 @@
   import TextEditor from './citeEditors/TextEditor.svelte';
   import DateEditor from './citeEditors/DateEditor.svelte';
   import AuthorsEditor from './citeEditors/AuthorsEditor.svelte';
-  import type { ICard } from '../types';
-  import type { Writable } from 'svelte/store';
   import { getContext } from 'svelte';
   import { clickOutside } from './outclick';
   import { citeLabels } from './labels';
+  import { createTransition } from './transition';
+  import type { Writable } from 'svelte/store';
 
   export let key: string;
-  let card: Writable<ICard> = getContext('card');
   let currentEditor: Writable<string | null> = getContext('currentEditor');
+
+  let transition = createTransition(
+    (t: number, eased: number) => {
+      return `
+      transform: translateY(${(1 - eased) * 100}%) scale(${eased});
+    `;
+    },
+    'sineOut',
+    {
+      durationMultiplier: 2,
+    }
+  );
 
   let component: any;
   $: {
@@ -23,22 +34,28 @@
     }
   }
   function handleOutclick() {
-    console.log('detected outclick');
     $currentEditor = null;
   }
 </script>
 
-<div class="top" use:clickOutside on:outclick={handleOutclick}>
-  <h1>Edit {citeLabels[key]}</h1>
-  <div class="content">
-    <svelte:component this={component} {key} bind:card={$card} />
+<div class="center">
+  <div
+    class="top"
+    use:clickOutside
+    on:outclick={handleOutclick}
+    transition:transition
+  >
+    <h1>Edit {citeLabels[key]}</h1>
+    <div class="content">
+      <svelte:component this={component} {key} />
+    </div>
   </div>
 </div>
 
 <style>
   .top {
-    z-index: 1000;
-    position: absolute;
+    position: relative;
+    z-index: 999;
     box-sizing: border-box;
     width: 100vw;
     height: 200px;
@@ -50,6 +67,18 @@
     display: flex;
     flex-direction: column;
     gap: var(--padding);
+    max-width: 600px;
+  }
+  .center {
+    position: fixed;
+    display: flex;
+    justify-content: center;
+    z-index: 1000;
+    box-sizing: border-box;
+    width: 100vw;
+    height: auto;
+    bottom: 0;
+    left: 0;
   }
   h1 {
     margin: 0;

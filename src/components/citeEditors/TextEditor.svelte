@@ -2,8 +2,15 @@
   import type { ICard } from '../../types';
   import { onMount } from 'svelte';
   import { validateText } from '../citeFormatters';
+  import type { Writable } from 'svelte/store';
+  import { getContext } from 'svelte';
+  import type { EditHistory } from '../history';
 
-  let textarea: HTMLElement;
+  export let key: string;
+  const card: Writable<ICard> = getContext('card');
+  const history: EditHistory = getContext('history');
+
+  let textarea: HTMLTextAreaElement;
   onMount(function () {
     textarea.focus();
   });
@@ -11,20 +18,26 @@
   let valid: boolean;
 
   function validate() {
-    valid = validateText(card[key]);
+    valid = validateText($card[key]);
   }
 
-  export let card: ICard;
-  export let key: string;
+  function updateCard() {
+    history.action('text', {
+      text: textarea.value,
+      key: key,
+    });
+  }
 
-  $: card[key], validate();
+  $: $card[key], validate();
 </script>
 
 <textarea
   bind:this={textarea}
   placeholder={'Type text here'}
   class:invalid={!valid}
-  bind:value={card[key]}
+  on:input={updateCard}
+  on:blur={() => history.preventExtension()}
+  value={$card[key]}
 />
 
 <style>
@@ -40,9 +53,12 @@
     padding: var(--padding);
     background: none;
     color: var(--text);
+    background: var(--background-select-weak-secondary);
+    transition: background var(--transition-duration);
   }
   textarea:focus {
-    background: var(--background-select-weak-secondary);
+    background: var(--background-select-secondary);
+    color: var(--text-strong);
   }
   textarea.invalid {
     background: var(--background-error-weak-secondary);
