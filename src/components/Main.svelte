@@ -114,6 +114,11 @@
     ) {
       return;
     }
+    if (e.key == 'c' && (e.metaKey || e.ctrlKey)) {
+      e.preventDefault();
+      e.stopPropagation();
+      copyAndMessage();
+    }
     if (e.key == 'p' && !(e.metaKey || e.ctrlKey || e.shiftKey)) {
       e.preventDefault();
       e.stopPropagation();
@@ -156,6 +161,10 @@
       }
     );
   }
+  function copyAndMessage() {
+    copyCard($card, shrunk);
+    messenger.addMessage('Copied to clipboard!');
+  }
 </script>
 
 <svelte:window on:keydown={handleKeydown} />
@@ -169,12 +178,8 @@
           ><Icon name="popout" /></Button
         >
       {/if}
-      <Button
-        tooltip={'Copy card'}
-        on:click={() => {
-          copyCard($card, shrunk);
-          messenger.addMessage('Copied to clipboard!');
-        }}><Icon name="copy" /></Button
+      <Button tooltip={'Copy card'} on:click={copyAndMessage}
+        ><Icon name="copy" /></Button
       >
       <Button on:click={animateReload} tooltip={'Reset card'}
         ><Icon name="reload" /></Button
@@ -185,7 +190,6 @@
     <div class="card" on:scroll={handleScroll} bind:this={cardElement}>
       <div class="tag" class:moreWidth={context != 'popup'}>
         <Text
-          autofocus
           bind:this={tagText}
           bind:text={$card.tag}
           placeholder="Type tag here..."

@@ -9,8 +9,10 @@ export let tooltipState = writable({
 
 class Messenger {
   messages: Writable<IMessage[]>;
+  timeouts: NodeJS.Timeout[];
   constructor() {
     this.messages = writable([]);
+    this.timeouts = [];
   }
   addMessage(text: string) {
     // add message and removes them after 5 seconds
@@ -19,13 +21,17 @@ class Messenger {
       // trim if longer than 5 seconds
       if (messages.length > 3) {
         messages.shift();
+        clearTimeout(this.timeouts.shift());
       }
-      setTimeout(() => {
-        this.messages.update((messages) => {
-          messages.shift();
-          return messages;
-        });
-      }, 5000);
+      this.timeouts.push(
+        setTimeout(() => {
+          this.messages.update((messages) => {
+            messages.shift();
+            return messages;
+          });
+          this.timeouts.shift();
+        }, 5000)
+      );
       return messages;
     });
   }
