@@ -5,7 +5,8 @@ export function copyCard(card: ICard, shrunk = false): void {
   let title = document.createElement('h3');
   title.textContent = card.tag;
   title.style.fontFamily = 'Calibri';
-  title.style.margin = '13pt';
+  title.style.fontSize = '13pt';
+  title.style.margin = '0px';
   html.appendChild(title);
 
   let cite = document.createElement('p');
@@ -36,8 +37,8 @@ export function copyCard(card: ICard, shrunk = false): void {
     let p = document.createElement('p');
     p.style.fontFamily = 'Calibri';
     p.style.fontSize = '11pt';
-    p.style.margin = '1em 0';
-    p.style.lineHeight = '1.5em';
+    p.style.margin = '0.8em 0';
+    p.style.lineHeight = '1.15em';
 
     for (let span of para) {
       let s = document.createElement('span');

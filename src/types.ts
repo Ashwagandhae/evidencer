@@ -45,4 +45,7 @@ export type IFormatter = {
 export type IMessage = {
   text: string;
   id: number;
+  error: boolean;
 };
+
+export type IPopupKeys = 'login';

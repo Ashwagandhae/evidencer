@@ -3,11 +3,12 @@
   import Tooltip from './Tooltip.svelte';
   import Icon from './Icon.svelte';
   export let selected: boolean = false;
+  // allows toggle behavior without changing button color
+  export let selectedColor: boolean = true;
   export let disabled: boolean = false;
   export let tooltip: null | string | ITooltipInfo = null;
   let tooltipInfo: ITooltipInfo;
   function setTooltipInfo() {
-    console.log('bruh');
     if (tooltip == null) {
       tooltipInfo = { exist: false };
     } else if (typeof tooltip == 'string') {
@@ -44,6 +45,7 @@
     bind:this={element}
     on:click
     class:selected
+    class:selectedColor
     {disabled}
     on:click={handleClick}
     on:mouseenter={animateHover}
@@ -70,6 +72,7 @@
     width: min-content;
     transition: color var(--transition-duration),
       background var(--transition-duration);
+    white-space: nowrap;
   }
   button:hover {
     background-color: var(--background-select-weak);
@@ -88,13 +91,13 @@
   :global(.levelOne) button:active {
     background-color: var(--background-select-secondary);
   }
-  .selected,
-  .selected:hover {
+  .selected.selectedColor,
+  .selected.selectedColor:hover {
     background-color: var(--background-select);
     color: var(--text-strong);
   }
-  :global(.levelOne) .selected,
-  :global(.levelOne) .selected:hover {
+  :global(.levelOne) .selected.selectedColor,
+  :global(.levelOne) .selected.selectedColor:hover {
     background-color: var(--background-select-secondary);
   }
   button:disabled {

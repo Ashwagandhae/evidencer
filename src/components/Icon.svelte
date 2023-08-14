@@ -12,6 +12,9 @@
   import OrganizationIcon from './icons/OrganizationIcon.svelte';
   import DeleteIcon from './icons/DeleteIcon.svelte';
   import CheckIcon from './icons/CheckIcon.svelte';
+  import RobotIcon from './icons/RobotIcon.svelte';
+  import VaultIcon from './icons/VaultIcon.svelte';
+  import LoginIcon from './icons/LoginIcon.svelte';
   let icons = {
     copy: CopyIcon,
     popout: PopoutIcon,
@@ -26,6 +29,9 @@
     organization: OrganizationIcon,
     delete: DeleteIcon,
     check: CheckIcon,
+    robot: RobotIcon,
+    vault: VaultIcon,
+    login: LoginIcon,
   };
   export let name: string;
 </script>

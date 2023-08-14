@@ -6,6 +6,7 @@
   import { getContext } from 'svelte';
   import type { EditHistory } from '../history';
   import { transitionDuration } from '../transition';
+  import TextButton from '../TextButton.svelte';
 
   export let key: string;
   const card: Writable<ICard> = getContext('card');
@@ -37,7 +38,7 @@
         <AuthorEditor {index} bind:author />
       </li>
     {/each}
-    <button on:click={addAuthor}>Add author</button>
+    <TextButton on:click={addAuthor}>Add author</TextButton>
   </ul>
 </div>
 
@@ -56,33 +57,5 @@
     display: flex;
     flex-direction: column;
     gap: 8px;
-  }
-  button {
-    border: 2px solid var(--background-select-weak-secondary);
-    box-sizing: border-box;
-    outline: none;
-    display: block;
-    box-sizing: border-box;
-    position: relative;
-    font-size: inherit;
-    font-weight: inherit;
-    font-family: inherit;
-    background: none;
-    cursor: pointer;
-    padding: var(--padding);
-    border-radius: var(--radius);
-    white-space: nowrap;
-    color: var(--text);
-    transition: background var(--transition-duration),
-      color var(--transition-duration), border var(--transition-duration);
-  }
-  button:hover {
-    background: var(--background-select-weak-secondary);
-    color: var(--text-strong);
-  }
-  button:active {
-    transition: none;
-    background: var(--background-select-secondary);
-    border: 2px solid var(--background-select-secondary);
   }
 </style>

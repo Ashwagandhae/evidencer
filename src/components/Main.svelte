@@ -8,6 +8,7 @@
   import { formatters } from './citeFormatters';
   import { EditHistory } from './history';
   import Text from './Text.svelte';
+  import Popups from './Popups.svelte';
   import Cite from './Cite.svelte';
   import CiteEditor from './CiteEditor.svelte';
   import Paras from './Paras.svelte';
@@ -17,7 +18,8 @@
   import ButtonGroup from './ButtonGroup.svelte';
   import Messages from './Messages.svelte';
   import { createTransition, transitionDuration } from './transition';
-  import { messenger } from './stores';
+  import { messenger, popups } from './stores';
+  import { autoCut as arguflowAutoCut, htmlToParas } from './arguflow';
 
   export let context: 'popup' | 'popout' | 'options';
 
@@ -218,7 +220,15 @@
         <Paras {shrunk} />
       </div>
     </div>
-    {#if $currentEditor != null}
+    {#if $popups.length > 0}
+      <Popups
+        name={$popups[0]}
+        closePopup={() => {
+          $popups = $popups.slice(1);
+          $popups = $popups;
+        }}
+      />
+    {:else if $currentEditor != null}
       <CiteEditor key={$currentEditor} />
     {/if}
   {/if}

@@ -28,5 +28,9 @@
       "128": "/icons/app128.png"
     }
   },
-  "permissions": ["storage", "system.display", "tabs", "unlimitedStorage"]
+  "permissions": ["storage", "system.display", "tabs", "unlimitedStorage"],
+  "host_permissions": [
+    "https://api.arguflow.ai/*",
+    "https://api.arguflow.ai/*/*"
+  ]
 }

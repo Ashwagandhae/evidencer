@@ -9,6 +9,10 @@ type Action = {
   canExtend: boolean;
 };
 
+function deepClone(obj: any) {
+  return JSON.parse(JSON.stringify(obj));
+}
+
 let actionLabels = {
   text: ' text edit',
   addAuthor: ' author addition',
@@ -17,6 +21,7 @@ let actionLabels = {
   editDate: ' date edit',
   editPara: ' paragraph edit',
   condenseParas: ' paragraph condensation',
+  autoCutParas: ' auto-cut',
 };
 export class EditHistory {
   history: Action[];
@@ -84,6 +89,9 @@ export class EditHistory {
       case 'condenseParas':
         historyData = this.condenseParas();
         break;
+      case 'autoCutParas':
+        historyData = { oldParas: deepClone(this.$card.paras) };
+        this.$card.paras = data;
     }
     return historyData;
   }
@@ -156,6 +164,9 @@ export class EditHistory {
         break;
       case 'condenseParas':
         this.uncondenseParas(data);
+        break;
+      case 'autoCutParas':
+        this.$card.paras = data.oldParas;
         break;
     }
     messenger.addMessage('Undid ' + actionLabels[action.name]);

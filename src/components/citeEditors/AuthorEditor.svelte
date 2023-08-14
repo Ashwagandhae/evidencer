@@ -62,6 +62,7 @@
     on:input={editAuthor}
     value={author.name}
     on:blur={() => history.preventExtension()}
+    placeholder="name"
   />
   <div class="right">
     <input
@@ -71,7 +72,10 @@
       on:input={editAuthor}
       value={author.isPerson}
     />
-    <Button on:click={() => (author.isPerson = !author.isPerson)}>
+    <Button
+      on:click={() => (author.isPerson = !author.isPerson)}
+      tooltip={author.isPerson ? 'Person' : 'Organization'}
+    >
       {#if author.isPerson}<Icon name="person" />{:else}<Icon
           name="organization"
         />{/if}
@@ -127,5 +131,9 @@
   input[type='text']:focus {
     background: var(--background-select-secondary);
     color: var(--text-strong);
+  }
+  /* plaholder */
+  input[type='text']::placeholder {
+    color: var(--text-weak);
   }
 </style>

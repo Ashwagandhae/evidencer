@@ -21,7 +21,6 @@
     white-space: pre-wrap;
     transition: background 0.1s;
     line-height: 1.6em;
-    transition: font-size var(--transition-duration);
   }
   .underline {
     text-decoration: underline;

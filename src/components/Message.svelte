@@ -1,6 +1,7 @@
 <script lang="ts">
   import { createTransition } from './transition';
   export let text: string;
+  export let error: boolean;
 
   let transition = createTransition(
     (t, eased, info) => {
@@ -19,7 +20,7 @@
   );
 </script>
 
-<div class="message" transition:transition|local>
+<div class="message" class:error transition:transition|local>
   {text}
 </div>
 
@@ -35,5 +36,8 @@
     box-sizing: border-box;
     pointer-events: all;
     box-shadow: var(--shadow);
+  }
+  .error {
+    color: var(--text-error);
   }
 </style>
