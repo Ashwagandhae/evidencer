@@ -12,28 +12,81 @@ chrome.storage.local.get(['loggedIn'], (result) => {
   authInit = true;
 });
 
+type UserInfo = {
+  id: string;
+  email: string;
+  username: string;
+  website: string;
+  visible_email: boolean;
+};
+
 auth.subscribe((value) => {
   if (!authInit) return;
 
   chrome.storage.local.set({ loggedIn: value.loggedIn });
 });
 
-const URL = 'https://vault.arguflow.ai/';
-const URL_USER = URL + 'user/';
+export const URL = 'https://vault.arguflow.ai/';
+export const URL_USER = URL + 'user/';
 const API_URL = 'https://api.arguflow.ai/api/';
 const AUTH_URL = API_URL + 'auth';
 const AUTO_CUT_URL = API_URL + 'card/cut';
+const CARD_URL = API_URL + 'card';
+const COLLECTIONS_URL = API_URL + 'user/collections/';
 
-export function autoLogin() {
-  return new Promise<void>((resolve) => {
-    chrome.storage.local.get(['arguflowLogin'], (result) => {
-      if (result.arguflowLogin != null) {
-        let { email, password } = result.arguflowLogin;
-        resolve(login(email, password));
-      } else {
-        resolve();
-      }
-    });
+const ADD_CARD_TO_COLLECTION_URL = API_URL + 'card_collection/';
+
+function makeRequest(
+  url: string,
+  method: 'POST' | 'GET' | 'DELETE',
+  body: any,
+  expectedStatus = 200,
+  parseResponse = true,
+  callbacks: {
+    onSuccess?: (response: Response | any) => void;
+    onError?: (response: Response) => void;
+  } = {}
+): Promise<any> {
+  return new Promise((resolve, reject) => {
+    let fetchInit: RequestInit = {
+      method: method,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    };
+    if (method !== 'GET') {
+      fetchInit.body = JSON.stringify(body);
+    }
+    fetch(url, fetchInit)
+      .then((res) => {
+        if (res.ok && res.status === expectedStatus) {
+          if (parseResponse) {
+            res
+              .json()
+              .then((json) => {
+                callbacks.onSuccess?.(json);
+                resolve(json);
+              })
+              .catch((err) => {
+                callbacks.onError?.(err);
+                reject(err);
+              });
+          } else {
+            callbacks.onSuccess?.(res);
+            resolve(res);
+          }
+        } else {
+          if (res.status === 401) {
+            auth.set({ loggedIn: false });
+          }
+          callbacks.onError?.(res);
+          reject('Unauthorized');
+        }
+      })
+      .catch((err) => {
+        callbacks.onError?.(err);
+        reject(err);
+      });
   });
 }
 
@@ -42,125 +95,36 @@ export function login(
   password: string,
   saveLogin = true
 ): Promise<void> {
-  return new Promise((resolve, reject) => {
-    fetch(AUTH_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ email, password }),
-    })
-      .then((res) => {
-        if (res.status === 204 && res.ok) {
-          auth.set({ loggedIn: true });
-          resolve();
-          if (saveLogin) {
-            chrome.storage.local.set({ arguflowLogin: { email, password } });
-          }
-        } else {
-          auth.set({ loggedIn: false });
-          reject(res.status);
-        }
-      })
-      .catch((err) => {
-        auth.set({ loggedIn: false });
-        reject(err);
-      });
+  return makeRequest(AUTH_URL, 'POST', { email, password }, 204, false, {
+    onSuccess: () => {
+      auth.set({ loggedIn: true });
+      if (saveLogin) {
+        chrome.storage.local.set({ arguflowLogin: { email, password } });
+      }
+    },
   });
 }
 export function logout(): Promise<void> {
-  return new Promise((resolve, reject) => {
-    fetch(AUTH_URL, {
-      method: 'DELETE',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({}),
-    })
-      .then((res) => {
-        if (res.status === 204 && res.ok) {
-          auth.set({ loggedIn: false });
-          resolve();
-        } else {
-          auth.set({ loggedIn: true });
-          reject(res.status);
-        }
-      })
-      .catch((err) => {
-        auth.set({ loggedIn: true });
-        reject(err);
-      });
+  return makeRequest(AUTH_URL, 'DELETE', {}, 204, false, {
+    onSuccess: () => {
+      auth.set({ loggedIn: false });
+    },
   });
 }
 
-export function autoCut(text: string): Promise<string> {
-  return new Promise((resolve, reject) => {
-    fetch(AUTO_CUT_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ uncut_card: text }),
-    })
-      .then((res) => {
-        if (res.status === 200 && res.ok) {
-          res.json().then((data) => {
-            if (data.completion && typeof data.completion === 'string') {
-              resolve(data.completion);
-            } else {
-              reject('Invalid response');
-            }
-          });
-        } else {
-          if (res.status === 401) {
-            auth.set({ loggedIn: false });
-          }
-          reject(res.status);
-        }
-      })
-      .catch((err) => {
-        reject(err);
-      });
-  });
+export function autoCut(text: string): Promise<{ completion: string }> {
+  return makeRequest(AUTO_CUT_URL, 'POST', { uncut_card: text }, 200, true);
 }
 
-export function getUserInfo(): Promise<{
-  id: string;
-  email: string;
-  username: string;
-  website: string;
-  visible_email: boolean;
-}> {
-  return new Promise((resolve, reject) => {
-    fetch(AUTH_URL, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    })
-      .then((res) => {
-        if (res.status === 200 && res.ok) {
-          res.json().then((data) => {
-            resolve(data);
-          });
-        } else {
-          if (res.status === 401) {
-            auth.set({ loggedIn: false });
-          }
-          reject(res.status);
-        }
-      })
-      .catch((err) => {
-        reject(err);
-      });
-  });
+export function getUserInfo(): Promise<UserInfo> {
+  return makeRequest(AUTH_URL, 'GET', {}, 200, true);
 }
 
-export function getUserLink(): Promise<string> {
+export function getUserId(): Promise<string> {
   return new Promise((resolve, reject) => {
     getUserInfo()
       .then((info) => {
-        resolve(URL_USER + info.id);
+        resolve(info.id);
       })
       .catch((err) => {
         reject(err);
@@ -169,7 +133,6 @@ export function getUserLink(): Promise<string> {
 }
 
 export function htmlToParas(html: string): IPara[] {
-  console.log(html);
   html = cleanHtml(html);
   // parse html
   let node = document.createElement('div');
@@ -216,4 +179,76 @@ function nodeToRuns(
     }
   }
   return runs;
+}
+
+export function uploadCard(
+  cardHtml: string,
+  link: string,
+  isPrivate: boolean
+): Promise<{
+  card_metadata: {
+    id: string;
+    content: string;
+    link: string;
+    author_id: string;
+    qdrant_point_id: string;
+    created_at: string;
+    updated_at: string;
+    oc_file_path: string;
+    card_html: string;
+    private: boolean;
+  };
+  duplicate: boolean;
+}> {
+  return makeRequest(
+    CARD_URL,
+    'POST',
+    {
+      link: link,
+      card_html: cardHtml,
+      private: isPrivate,
+    },
+    200,
+    true
+  );
+}
+
+export type Collection = {
+  id: string;
+  author_id: string;
+  name: string;
+  is_public: boolean;
+  description: string;
+  created_at: string;
+  updated_at: string;
+  file_id: string;
+};
+
+export async function getCollections(
+  page: number
+): Promise<{ collections: Collection[]; total_pages: number }> {
+  try {
+    const info = await getUserInfo();
+    return await makeRequest(
+      COLLECTIONS_URL + info.id + '/' + page.toString(),
+      'GET',
+      {},
+      200,
+      true
+    );
+  } catch (err) {
+    return await Promise.reject(err);
+  }
+}
+
+export function addCardToCollection(cardId: string, collectionId: string) {
+  return makeRequest(
+    ADD_CARD_TO_COLLECTION_URL + collectionId,
+    'POST',
+    {
+      card_metadata_id: cardId,
+    },
+    204,
+    false
+  );
 }

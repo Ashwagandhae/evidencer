@@ -1,4 +1,9 @@
-<button on:click><slot /></button>
+<script lang="ts">
+  export let expand = false;
+  export let disabled = false;
+</script>
+
+<button class:expand {disabled} on:click><slot /></button>
 
 <style>
   button {
@@ -23,6 +28,9 @@
     transition: background var(--transition-duration),
       color var(--transition-duration), border var(--transition-duration);
     gap: var(--padding);
+  }
+  button.expand {
+    width: 100%;
   }
   button:hover,
   button:focus {

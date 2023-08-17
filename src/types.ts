@@ -48,4 +48,4 @@ export type IMessage = {
   error: boolean;
 };
 
-export type IPopupKeys = 'login';
+export type IPopupKeys = 'login' | 'upload';

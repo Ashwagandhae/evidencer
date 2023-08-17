@@ -6,7 +6,7 @@
   export let exist: boolean = true;
   export let content: string = '';
   export let disabled: boolean = false;
-  export const layout: string = 'bottom';
+  export let layout: string = 'bottom';
 
   let isHovered: boolean = false;
   let x: number = 0;

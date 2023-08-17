@@ -1,41 +1,55 @@
 import type { ICard } from '../types';
 import { formatters } from './citeFormatters';
-export function copyCard(card: ICard, shrunk = false): void {
+
+export function cardToHtml(
+  card: ICard,
+  shrunk: boolean,
+  includeCite: boolean = true,
+  includeFont: boolean = true
+): HTMLElement {
   let html = document.createElement('div');
-  let title = document.createElement('h3');
-  title.textContent = card.tag;
-  title.style.fontFamily = 'Calibri';
-  title.style.fontSize = '13pt';
-  title.style.margin = '0px';
-  html.appendChild(title);
+  if (includeCite) {
+    let title = document.createElement('h3');
+    title.textContent = card.tag;
+    if (includeFont) {
+      title.style.fontFamily = 'Calibri';
+    }
+    title.style.fontSize = '13pt';
+    title.style.margin = '0px';
+    html.appendChild(title);
 
-  let cite = document.createElement('p');
-  cite.style.fontFamily = 'Calibri';
-  cite.style.margin = '0px';
+    let cite = document.createElement('p');
+    if (includeFont) {
+      cite.style.fontFamily = 'Calibri';
+    }
+    cite.style.margin = '0px';
 
-  let bigCitePart = document.createElement('span');
-  bigCitePart.textContent = `${formatters.bigAuthors.format(
-    card
-  )}, ${formatters.bigDate.format(card)} `;
-  bigCitePart.style.fontSize = '13pt';
-  bigCitePart.style.fontWeight = 'bold';
-  cite.appendChild(bigCitePart);
+    let bigCitePart = document.createElement('span');
+    bigCitePart.textContent = `${formatters.bigAuthors.format(
+      card
+    )}, ${formatters.bigDate.format(card)} `;
+    bigCitePart.style.fontSize = '13pt';
+    bigCitePart.style.fontWeight = 'bold';
+    cite.appendChild(bigCitePart);
 
-  let smallCitePart = document.createElement('span');
-  smallCitePart.textContent = `[${formatters.authors.format(
-    card
-  )}. ${formatters.date.format(card)}. "${formatters.title.format(
-    card
-  )}". ${formatters.siteName.format(card)}. ${formatters.url.format(
-    card
-  )}. ${formatters.accessDate.format(card)}]`;
-  smallCitePart.style.fontSize = '11pt';
+    let smallCitePart = document.createElement('span');
+    smallCitePart.textContent = `[${formatters.authors.format(
+      card
+    )}. ${formatters.date.format(card)}. "${formatters.title.format(
+      card
+    )}". ${formatters.siteName.format(card)}. ${formatters.url.format(
+      card
+    )}. ${formatters.accessDate.format(card)}]`;
+    smallCitePart.style.fontSize = '11pt';
 
-  cite.appendChild(smallCitePart);
-  html.appendChild(cite);
+    cite.appendChild(smallCitePart);
+    html.appendChild(cite);
+  }
   for (let para of card.paras) {
     let p = document.createElement('p');
-    p.style.fontFamily = 'Calibri';
+    if (includeFont) {
+      p.style.fontFamily = 'Calibri';
+    }
     p.style.fontSize = '11pt';
     p.style.margin = '0.8em 0';
     p.style.lineHeight = '1.15em';
@@ -56,6 +70,10 @@ export function copyCard(card: ICard, shrunk = false): void {
     }
     html.appendChild(p);
   }
+  return html;
+}
+export function copyCard(card: ICard, shrunk = false): void {
+  let html = cardToHtml(card, shrunk);
   copyHtmlToClipboard(html);
 }
 function copyHtmlToClipboard(html: HTMLElement) {

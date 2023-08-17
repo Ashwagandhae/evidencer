@@ -30,11 +30,11 @@
     // do basic validation
     if (email.length == 0) {
       emailError = true;
-      messenger.addError('Email is required');
+      messenger.addErrorMessage('Email is required');
     }
     if (password.length == 0) {
       passwordError = true;
-      messenger.addError('Password is required');
+      messenger.addErrorMessage('Password is required');
     }
     if (emailError || passwordError) {
       return;
@@ -46,14 +46,9 @@
         closePopup();
       })
       .catch((err) => {
-        console.log(err);
         emailError = true;
         passwordError = true;
-        if (typeof err == 'number') {
-          messenger.addError(`Login error: ${err}`);
-        } else {
-          messenger.addError('Login error');
-        }
+        messenger.addError('login', err);
       });
   }
 </script>

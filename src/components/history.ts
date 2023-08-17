@@ -438,7 +438,6 @@ export class EditHistory {
   }
   uncondenseParas(data: { chopPoints: number[] }) {
     if (this.$card.paras.length > 1) {
-      console.log('error - uncondensing should only have 1 para');
       return;
     }
     // first, chop runs back into pieces that line up with para barriers
@@ -471,7 +470,6 @@ export class EditHistory {
     for (let run of newPara) {
       charIndex += run.text.length;
       para.push(run);
-      console.log(charIndex);
       if (chopPoints[chopIndex] == charIndex) {
         // remove extra space at the end of last run
         para[para.length - 1].text = para[para.length - 1].text.slice(

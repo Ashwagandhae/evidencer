@@ -13,7 +13,8 @@
     logout,
     autoCut as arguflowAutoCut,
     htmlToParas,
-    getUserLink,
+    getUserId,
+    URL_USER,
   } from './arguflow';
 
   let currentTool: Writable<null | 'highlight' | 'underline' | 'eraser'> =
@@ -30,15 +31,19 @@
       }
     }
     if (text.length == 0) {
-      messenger.addError('No text');
+      messenger.addErrorMessage('No text');
       return;
     }
     if (text.length >= 4300) {
-      messenger.addError(`Too much text, ${text.length}/4300 characters`);
+      messenger.addErrorMessage(
+        `Too much text, ${text.length}/4300 characters`
+      );
       return;
     }
     if (text.length <= 200) {
-      messenger.addError(`Too little text ${text.length}/200 characters`);
+      messenger.addErrorMessage(
+        `Too little text ${text.length}/200 characters`
+      );
       return;
     }
     messenger.addMessage('Auto cutting...');
@@ -46,18 +51,10 @@
     arguflowAutoCut(text)
       .then((cardHtml) => {
         messenger.addMessage('Done!');
-        history.action('autoCutParas', htmlToParas(cardHtml));
+        history.action('autoCutParas', htmlToParas(cardHtml.completion));
       })
       .catch((err) => {
-        if (err == 401) {
-          messenger.addError('Auto cut failed: Not logged in');
-          return;
-        }
-        if (typeof err == 'string' || typeof err == 'number') {
-          messenger.addError(`Auto cut failed: ${err}`);
-          return;
-        }
-        messenger.addError('Auto cut failed');
+        messenger.addError('auto cut', err);
       });
   }
   let transition = createTransition(
@@ -105,7 +102,7 @@
                   messenger.addMessage('Logged out');
                 })
                 .catch((err) => {
-                  messenger.addMessage('Failed to log out');
+                  messenger.addError('logout', err);
                 });
             } else {
               $popups.push('login');
@@ -119,21 +116,27 @@
           tooltip="Account"
           disabled={!$auth.loggedIn}
           on:click={() => {
-            getUserLink()
-              .then((link) => {
-                window.open(link, '_blank');
+            getUserId()
+              .then((id) => {
+                window.open(URL_USER + id, '_blank');
               })
               .catch((err) => {
-                if (err == 401) {
-                  messenger.addError('Failed to get user info: Not logged in');
-                  return;
-                }
-                messenger.addError('Failed to get user info');
+                messenger.addError('user info', err);
               });
           }}
         >
           <Icon name="person" />
         </Button>
+      </ButtonGroup>
+      <ButtonGroup>
+        <Button
+          tooltip="Upload to arguflow"
+          disabled={!$auth.loggedIn}
+          on:click={() => {
+            $popups.push('upload');
+            $popups = $popups;
+          }}><Icon name="upload" /></Button
+        >
         <Button
           tooltip="Auto cut"
           disabled={!$auth.loggedIn}

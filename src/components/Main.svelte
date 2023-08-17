@@ -28,7 +28,9 @@
   setContext('currentTool', currentTool);
   let currentEditor: Writable<string | null> = writable(null);
   setContext('currentEditor', currentEditor);
-  let shrunk = false;
+
+  let shrunk: Writable<boolean> = writable(false);
+  setContext('shrunk', shrunk);
 
   let card: Writable<ICard> = writable(null);
   setContext('card', card);
@@ -164,7 +166,7 @@
     );
   }
   function copyAndMessage() {
-    copyCard($card, shrunk);
+    copyCard($card, $shrunk);
     messenger.addMessage('Copied to clipboard!');
   }
 </script>
@@ -215,9 +217,9 @@
         <ParaTools
           paras={$card.paras}
           floating={paraToolsFloating}
-          bind:shrunk
+          bind:shrunk={$shrunk}
         />
-        <Paras {shrunk} />
+        <Paras shrunk={$shrunk} />
       </div>
     </div>
     {#if $popups.length > 0}

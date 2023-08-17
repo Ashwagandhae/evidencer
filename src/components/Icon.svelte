@@ -15,6 +15,8 @@
   import RobotIcon from './icons/RobotIcon.svelte';
   import VaultIcon from './icons/VaultIcon.svelte';
   import LoginIcon from './icons/LoginIcon.svelte';
+  import UploadIcon from './icons/UploadIcon.svelte';
+  import LockIcon from './icons/LockIcon.svelte';
   let icons = {
     copy: CopyIcon,
     popout: PopoutIcon,
@@ -32,6 +34,8 @@
     robot: RobotIcon,
     vault: VaultIcon,
     login: LoginIcon,
+    upload: UploadIcon,
+    lock: LockIcon,
   };
   export let name: string;
 </script>

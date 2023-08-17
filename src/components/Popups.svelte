@@ -3,6 +3,7 @@
   import Login from './Login.svelte';
   import { clickOutside } from './outclick';
   import { createTransition } from './transition';
+  import Upload from './Upload.svelte';
   export let name: IPopupKeys;
   export let closePopup: () => void;
   let transition = createTransition(
@@ -30,6 +31,8 @@
   >
     {#if name == 'login'}
       <Login {closePopup} />
+    {:else if name == 'upload'}
+      <Upload {closePopup} />
     {/if}
   </div>
 </div>
