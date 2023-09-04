@@ -1,16 +1,41 @@
+import type { ArguflowRequestMessage, ChromeMessage } from '../../types';
 import type { IPara, IRun } from 'src/types';
-import { get, writable } from 'svelte/store';
 
-export let auth = writable({
-  loggedIn: false,
-});
+export const URL = 'https://vault.arguflow.ai/';
+export const URL_USER = URL + 'user/';
+export const API_URL = 'https://api.arguflow.ai/api/';
+export const AUTH_URL = API_URL + 'auth';
+export const AUTO_CUT_URL = API_URL + 'card/cut';
+export const CARD_URL = API_URL + 'card';
+export const COLLECTIONS_URL = API_URL + 'user/collections/';
 
-let authInit = false;
+export const ADD_CARD_TO_COLLECTION_URL = API_URL + 'card_collection/';
 
-chrome.storage.local.get(['loggedIn'], (result) => {
-  auth.set({ loggedIn: result.loggedIn });
-  authInit = true;
-});
+export function backgroundRequest(
+  url: string,
+  method: 'POST' | 'GET' | 'DELETE',
+  body: any,
+  expectedStatus = 200,
+  parseResponse = true
+): Promise<any> {
+  let message: ArguflowRequestMessage = {
+    message: 'arguflowRequest',
+    url: url,
+    method: method,
+    body: body,
+    parseResponse: parseResponse,
+    expectedStatus: expectedStatus,
+  };
+  return new Promise((resolve, reject) => {
+    chrome.runtime.sendMessage(message, (response: ChromeMessage) => {
+      if (response?.message === 'arguflowResponse') {
+        resolve(response.response);
+      } else if (response?.message === 'arguflowError') {
+        reject(response.error);
+      }
+    });
+  });
+}
 
 type UserInfo = {
   id: string;
@@ -20,22 +45,6 @@ type UserInfo = {
   visible_email: boolean;
 };
 
-auth.subscribe((value) => {
-  if (!authInit) return;
-
-  chrome.storage.local.set({ loggedIn: value.loggedIn });
-});
-
-export const URL = 'https://vault.arguflow.ai/';
-export const URL_USER = URL + 'user/';
-const API_URL = 'https://api.arguflow.ai/api/';
-const AUTH_URL = API_URL + 'auth';
-const AUTO_CUT_URL = API_URL + 'card/cut';
-const CARD_URL = API_URL + 'card';
-const COLLECTIONS_URL = API_URL + 'user/collections/';
-
-const ADD_CARD_TO_COLLECTION_URL = API_URL + 'card_collection/';
-
 function makeRequest(
   url: string,
   method: 'POST' | 'GET' | 'DELETE',
@@ -43,49 +52,22 @@ function makeRequest(
   expectedStatus = 200,
   parseResponse = true,
   callbacks: {
-    onSuccess?: (response: Response | any) => void;
-    onError?: (response: Response) => void;
+    onSuccess?: () => void;
   } = {}
 ): Promise<any> {
   return new Promise((resolve, reject) => {
-    let fetchInit: RequestInit = {
-      method: method,
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    };
-    if (method !== 'GET') {
-      fetchInit.body = JSON.stringify(body);
-    }
-    fetch(url, fetchInit)
+    backgroundRequest(url, method, body, expectedStatus, parseResponse)
       .then((res) => {
-        if (res.ok && res.status === expectedStatus) {
-          if (parseResponse) {
-            res
-              .json()
-              .then((json) => {
-                callbacks.onSuccess?.(json);
-                resolve(json);
-              })
-              .catch((err) => {
-                callbacks.onError?.(err);
-                reject(err);
-              });
-          } else {
-            callbacks.onSuccess?.(res);
-            resolve(res);
-          }
-        } else {
-          if (res.status === 401) {
-            auth.set({ loggedIn: false });
-          }
-          callbacks.onError?.(res);
-          reject('Unauthorized');
-        }
+        callbacks?.onSuccess?.();
+        resolve(res);
       })
       .catch((err) => {
-        callbacks.onError?.(err);
-        reject(err);
+        if (err === 401) {
+          chrome.storage.local.set({ loggedIn: false });
+          reject('Unauthorized');
+        } else {
+          reject(err);
+        }
       });
   });
 }
@@ -94,20 +76,20 @@ export function login(
   email: string,
   password: string,
   saveLogin = true
-): Promise<void> {
+): Promise<null> {
   return makeRequest(AUTH_URL, 'POST', { email, password }, 204, false, {
     onSuccess: () => {
-      auth.set({ loggedIn: true });
+      chrome.storage.local.set({ loggedIn: true });
       if (saveLogin) {
-        chrome.storage.local.set({ arguflowLogin: { email, password } });
+        chrome.storage.session.set({ arguflowLogin: { email, password } });
       }
     },
   });
 }
-export function logout(): Promise<void> {
+export function logout(): Promise<null> {
   return makeRequest(AUTH_URL, 'DELETE', {}, 204, false, {
     onSuccess: () => {
-      auth.set({ loggedIn: false });
+      chrome.storage.local.set({ loggedIn: false });
     },
   });
 }
@@ -116,7 +98,7 @@ export function autoCut(text: string): Promise<{ completion: string }> {
   return makeRequest(AUTO_CUT_URL, 'POST', { uncut_card: text }, 200, true);
 }
 
-export function getUserInfo(): Promise<UserInfo> {
+function getUserInfo(): Promise<UserInfo> {
   return makeRequest(AUTH_URL, 'GET', {}, 200, true);
 }
 
@@ -161,6 +143,7 @@ function nodeToRuns(
   }
 ): IRun[] {
   let runs: IRun[] = [];
+
   if (node instanceof Text) {
     runs.push({
       text: node.textContent,

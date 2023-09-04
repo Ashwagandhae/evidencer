@@ -9,13 +9,13 @@
   import { createTransition } from './transition';
   import { messenger, popups } from './stores';
   import {
-    auth,
     logout,
     autoCut as arguflowAutoCut,
     htmlToParas,
     getUserId,
     URL_USER,
-  } from './arguflow';
+  } from '../pages/arguflow';
+  import { auth } from './stores';
 
   let currentTool: Writable<null | 'highlight' | 'underline' | 'eraser'> =
     getContext('currentTool');
@@ -71,9 +71,6 @@
   );
 
   export let paras: IPara[];
-  function condenseParas() {
-    history.action('condenseParas', {});
-  }
 
   let showVault = false;
 </script>
@@ -152,44 +149,51 @@
         <Button
           on:click={() => ($currentTool = null)}
           selected={$currentTool == null}
-          tooltip="Mouse"
+          tooltip={{ content: 'Mouse', shortcut: 'p' }}
         >
           <Icon name="cursor" />
         </Button>
         <Button
           on:click={() => ($currentTool = 'highlight')}
           selected={$currentTool == 'highlight'}
-          tooltip="Highlight"
+          tooltip={{ content: 'Highlight', shortcut: 'h' }}
         >
           <Icon name="highlight" />
         </Button>
         <Button
           on:click={() => ($currentTool = 'underline')}
           selected={$currentTool == 'underline'}
-          tooltip="Underline"
+          tooltip={{ content: 'Underline', shortcut: 'u' }}
         >
           <Icon name="underline" />
         </Button>
         <Button
           on:click={() => ($currentTool = 'eraser')}
           selected={$currentTool == 'eraser'}
-          tooltip="Eraser"
+          tooltip={{ content: 'Eraser', shortcut: 'e' }}
         >
           <Icon name="eraser" />
         </Button>
       </ButtonGroup>
       <ButtonGroup {floating}>
         <Button
-          on:click={condenseParas}
+          on:click={() => history.action('condenseParas', {})}
           disabled={paras.length <= 1}
-          tooltip={paras.length <= 1 ? 'Paragraphs merged' : 'Merge paragraphs'}
+          tooltip={{
+            content:
+              paras.length <= 1 ? 'Paragraphs merged' : 'Merge paragraphs',
+            shortcut: 'm',
+          }}
         >
           <Icon name="merge" />
         </Button>
         <Button
           on:click={() => (shrunk = !shrunk)}
           selected={shrunk}
-          tooltip={shrunk ? 'Expand text' : 'Shrink text'}
+          tooltip={{
+            content: shrunk ? 'Expand text' : 'Shrink text',
+            shortcut: 's',
+          }}
         >
           <Icon name="shrink" />
         </Button>

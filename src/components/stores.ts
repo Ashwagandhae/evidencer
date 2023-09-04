@@ -2,6 +2,19 @@ import { writable } from 'svelte/store';
 import type { Writable } from 'svelte/store';
 import type { IMessage, IPopupKeys } from '../types';
 
+export let auth = writable({
+  loggedIn: false,
+});
+
+chrome.storage.local.get(['loggedIn'], (result) => {
+  auth.set({ loggedIn: result.loggedIn });
+});
+chrome.storage.onChanged.addListener((changes, namespace) => {
+  if (namespace === 'local' && changes.loggedIn) {
+    auth.set({ loggedIn: changes.loggedIn.newValue });
+  }
+});
+
 export let tooltipState = writable({
   open: false,
   claimed: false,

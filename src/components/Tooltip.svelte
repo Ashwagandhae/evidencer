@@ -7,6 +7,7 @@
   export let content: string = '';
   export let disabled: boolean = false;
   export let layout: string = 'bottom';
+  export let shortcut: string | null = null;
 
   let isHovered: boolean = false;
   let x: number = 0;
@@ -123,6 +124,9 @@
     >
       <div class="content">
         {content}
+        {#if shortcut != null}
+          <span class="shortcut">{shortcut}</span>
+        {/if}
       </div>
     </div>
   {/if}
@@ -148,6 +152,16 @@
     box-shadow: var(--shadow);
   }
   .tooltip.disabled {
+    color: var(--text-tooltip-weak);
+  }
+
+  .content {
+    display: flex;
+    flex-direction: row;
+    gap: var(--padding);
+  }
+
+  .shortcut {
     color: var(--text-tooltip-weak);
   }
 </style>

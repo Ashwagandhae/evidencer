@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { login as authLogin } from './arguflow';
+  import { login as authLogin } from '../pages/arguflow';
   import TextButton from './TextButton.svelte';
   import Icon from './Icon.svelte';
   import { messenger } from './stores';
@@ -12,7 +12,7 @@
   let password = '';
   onMount(function () {
     emailInput.focus();
-    chrome.storage.local.get('arguflowLogin', (result) => {
+    chrome.storage.session.get('arguflowLogin', (result) => {
       if (result.arguflowLogin) {
         email = result.arguflowLogin.email;
         password = result.arguflowLogin.password;

@@ -36,6 +36,7 @@ export type ITooltipInfo = {
   disabled?: boolean;
   layout?: string;
   exist?: boolean;
+  shortcut?: string;
 };
 export type IFormatter = {
   key: string;
@@ -49,3 +50,43 @@ export type IMessage = {
 };
 
 export type IPopupKeys = 'login' | 'upload';
+
+export type GetCardDataMessage = {
+  message: 'getCardData';
+};
+
+export type GotCardDataMessage = {
+  message: 'gotCardData';
+  card: ICard;
+};
+
+export type InlineAutoCutMessage = {
+  message: 'inlineAutoCut';
+};
+
+export type ArguflowRequestMessage = {
+  message: 'arguflowRequest';
+  url: string;
+  method: 'POST' | 'GET' | 'DELETE';
+  body: any;
+  parseResponse: boolean;
+  expectedStatus: number;
+};
+
+export type ArguflowResponseMessage = {
+  message: 'arguflowResponse';
+  response: any;
+};
+
+export type ArguflowErrorMessage = {
+  message: 'arguflowError';
+  error: any;
+};
+
+export type ChromeMessage =
+  | GetCardDataMessage
+  | GotCardDataMessage
+  | InlineAutoCutMessage
+  | ArguflowRequestMessage
+  | ArguflowResponseMessage
+  | ArguflowErrorMessage;

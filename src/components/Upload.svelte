@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { Writable } from 'svelte/store';
-  import { getContext } from 'svelte';
+  import { getContext, onDestroy, onMount } from 'svelte';
   import Button from './Button.svelte';
   import Icon from './Icon.svelte';
   import TextButton from './TextButton.svelte';
@@ -9,20 +9,33 @@
   import {
     getCollections,
     uploadCard as uploadCardToArguflow,
-    type Collection,
     addCardToCollection,
-  } from './arguflow';
+    type Collection,
+  } from '../pages/arguflow';
   import { messenger } from './stores';
   import { createTransition } from './transition';
 
   const card: Writable<ICard> = getContext('card');
   const shrunk: Writable<boolean> = getContext('shrunk');
 
+  let uploadChoices: {
+    isPrivate: boolean;
+    includeDict: { [key: string]: boolean };
+  } = {
+    isPrivate: false,
+    includeDict: {},
+  };
+  onMount(function () {
+    chrome.storage.local.get('uploadChoices', (result) => {
+      if (result.uploadChoices) {
+        uploadChoices = result.uploadChoices;
+      }
+    });
+  });
+
   export let closePopup: () => void;
 
   let bookmark = false;
-
-  let isPrivate = false;
 
   async function uploadCard() {
     let html = cardToHtml($card, $shrunk, false, false);
@@ -31,17 +44,11 @@
       let cardData = await uploadCardToArguflow(
         html.innerHTML,
         $card.url,
-        isPrivate
+        uploadChoices.isPrivate
       );
-      let collectionIds: string[] = [];
-      for (let id of Object.keys(includeArr)) {
-        if (includeArr[id]) {
-          collectionIds.push(id);
-        }
-      }
-      if (collectionIds.length > 0) {
+      if (includeArray.length > 0) {
         messenger.addMessage('Adding to collections...');
-        for (let id of collectionIds) {
+        for (let id of includeArray) {
           console.log(id, cardData.card_metadata.id);
           await addCardToCollection(cardData.card_metadata.id, id);
         }
@@ -56,75 +63,125 @@
       messenger.addError('upload', err);
     }
   }
-  let includeArr: { [key: string]: boolean } = {};
+  let includeArray: string[] = [];
+  $: {
+    includeArray = [];
+    for (let id of Object.keys(uploadChoices.includeDict)) {
+      if (uploadChoices.includeDict[id]) {
+        includeArray.push(id);
+      } else {
+        delete uploadChoices.includeDict[id];
+      }
+    }
+  }
+
+  onDestroy(() => {
+    chrome.storage.local.set({ uploadChoices });
+  });
+
   let currentPage = 1;
+  let currentLoadedPage = 1;
+
+  let collectionsResp: {
+    collections: Collection[];
+    total_pages: number;
+  } | null = null;
+
+  $: bookmark, currentPage, onBookmarkChange();
+  function onBookmarkChange() {
+    if (bookmark) {
+      getCollections(currentPage)
+        .then((resp) => {
+          collectionsResp = resp;
+          currentLoadedPage = currentPage;
+        })
+        .catch((err) => {
+          messenger.addError('get collections', err);
+          bookmark = false;
+        });
+    }
+  }
 </script>
 
 <h1>Upload to Arguflow</h1>
 <div class="content" class:bookmark>
-  {#if bookmark}
-    <div class="bookmark">
-      {#await getCollections(currentPage)}
-        <div class="loader">Loading...</div>
-      {:then resp}
-        <div class="collectionsScroll">
-          <div class="collections">
-            {#each resp.collections as collection}
-              <button
-                class="collection"
-                on:click={() =>
-                  (includeArr[collection.id] = !includeArr[collection.id])}
-              >
-                <label for={collection.name}>{collection.name}</label>
-                {#if includeArr[collection.id]}
-                  <Icon name="check" />
-                {/if}
-                <input
-                  type="checkbox"
-                  bind:checked={includeArr[collection.id]}
-                  name={collection.name}
-                  hidden
-                />
-              </button>
-            {/each}
-            <div class="buttons">
-              {#if currentPage != 1}
-                <TextButton
-                  expand
-                  on:click={() => {
-                    currentPage--;
-                  }}
-                >
-                  Previous
-                </TextButton>
-              {/if}
-              {#if currentPage != resp.total_pages}
-                <TextButton
-                  expand
-                  on:click={() => {
-                    currentPage++;
-                  }}
-                >
-                  Next
-                </TextButton>
-              {/if}
-            </div>
-          </div>
+  {#if bookmark && collectionsResp != null}
+    <div class="collectionsScroll">
+      <div class="collections">
+        {#each collectionsResp.collections as collection}
+          <button
+            class="collection"
+            on:click={() => {
+              uploadChoices.includeDict[collection.id] =
+                !uploadChoices.includeDict[collection.id];
+            }}
+          >
+            <label for={collection.name}>{collection.name}</label>
+            {#if uploadChoices.includeDict[collection.id]}
+              <Icon name="check" />
+            {/if}
+            <input
+              type="checkbox"
+              bind:checked={uploadChoices.includeDict[collection.id]}
+              name={collection.name}
+              hidden
+            />
+          </button>
+        {/each}
+        <div class="buttons">
+          {#if currentLoadedPage != 1}
+            <TextButton
+              expand
+              on:click={() => {
+                currentPage--;
+              }}
+            >
+              Previous
+            </TextButton>
+          {/if}
+          {#if currentLoadedPage != collectionsResp.total_pages}
+            <TextButton
+              expand
+              on:click={() => {
+                currentPage++;
+              }}
+            >
+              Next
+            </TextButton>
+          {/if}
         </div>
-      {:catch err}
-        <div class="loader error">Failed to load collections: {err}</div>
-      {/await}
+      </div>
     </div>
   {/if}
   <div class="buttons">
     <Button
-      tooltip={{ content: isPrivate ? 'Private' : 'Public', layout: 'top' }}
-      selected={isPrivate}
-      on:click={() => (isPrivate = !isPrivate)}><Icon name="lock" /></Button
+      tooltip={{
+        content: uploadChoices.isPrivate ? 'Private' : 'Public',
+        layout: 'top',
+      }}
+      selected={uploadChoices.isPrivate}
+      on:click={() => {
+        uploadChoices.isPrivate = !uploadChoices.isPrivate;
+        uploadChoices = uploadChoices;
+      }}><Icon name="lock" /></Button
     >
-    <TextButton expand on:click={() => (bookmark = !bookmark)}
-      >Select Collections</TextButton
-    >
+    <TextButton expand on:click={() => (bookmark = !bookmark)}>
+      {#if includeArray.length > 0}
+        {includeArray.length}
+        {#if includeArray.length == 1}collection{:else}collections{/if}
+      {:else}
+        Select collections
+      {/if}
+    </TextButton>
+    {#if includeArray.length > 0}
+      <Button
+        tooltip={{ content: 'Clear collections', layout: 'top' }}
+        on:click={() => {
+          uploadChoices.includeDict = {};
+          includeArray = [];
+        }}><Icon name="delete" /></Button
+      >
+    {/if}
     <TextButton on:click={uploadCard} expand
       >Upload
       <Icon name="upload" />
@@ -197,16 +254,5 @@
   .collection:hover {
     background: var(--background-select-weak-secondary);
     color: var(--text-strong);
-  }
-
-  .loader {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    height: 100%;
-    padding: var(--padding);
-  }
-  .error {
-    color: var(--text-error);
   }
 </style>

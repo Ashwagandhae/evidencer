@@ -20,7 +20,7 @@ let actionLabels = {
   editAuthor: ' author edit',
   editDate: ' date edit',
   editPara: ' paragraph edit',
-  condenseParas: ' paragraph condensation',
+  condenseParas: ' paragraph merge',
   autoCutParas: ' auto-cut',
 };
 export class EditHistory {

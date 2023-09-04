@@ -15,6 +15,12 @@
       "js": ["src/pages/content/index.js"]
     }
   ],
+  "web_accessible_resources": [
+    {
+      "matches": ["<all_urls>"],
+      "resources": ["src/pages/arguflow/index.js"]
+    }
+  ],
   "background": {
     "service_worker": "src/pages/background/index.js"
   },
@@ -28,7 +34,13 @@
       "128": "/icons/app128.png"
     }
   },
-  "permissions": ["storage", "system.display", "tabs", "unlimitedStorage"],
+  "permissions": [
+    "storage",
+    "system.display",
+    "tabs",
+    "unlimitedStorage",
+    "contextMenus"
+  ],
   "host_permissions": [
     "https://api.arguflow.ai/*",
     "https://api.arguflow.ai/*/*"

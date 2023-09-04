@@ -1,5 +1,10 @@
 <script lang="ts">
-  import type { IStorage, ICard } from '../types';
+  import type {
+    IStorage,
+    ICard,
+    ChromeMessage,
+    GetCardDataMessage,
+  } from '../types';
   import { onMount, setContext, SvelteComponent } from 'svelte';
   import { copyCard } from './clipboard';
 
@@ -19,7 +24,6 @@
   import Messages from './Messages.svelte';
   import { createTransition, transitionDuration } from './transition';
   import { messenger, popups } from './stores';
-  import { autoCut as arguflowAutoCut, htmlToParas } from './arguflow';
 
   export let context: 'popup' | 'popout' | 'options';
 
@@ -32,19 +36,21 @@
   let shrunk: Writable<boolean> = writable(false);
   setContext('shrunk', shrunk);
 
-  let card: Writable<ICard> = writable(null);
+  let card: Writable<ICard | null> = writable(null);
   setContext('card', card);
   let history = new EditHistory(card);
   setContext('history', history);
 
   function requestCardData() {
-    return new Promise<ICard>((resolve, reject) => {
-      chrome.runtime.sendMessage(
-        { message: 'getCardData' },
-        function (response) {
-          resolve(response.card);
+    return new Promise<ICard | null>((resolve, reject) => {
+      let message: GetCardDataMessage = {
+        message: 'getCardData',
+      };
+      chrome.runtime.sendMessage(message, function (response: ChromeMessage) {
+        if (response?.message == 'gotCardData') {
+          resolve(response?.card ?? null);
         }
-      );
+      });
     });
   }
   let cardElement: HTMLElement;
@@ -97,7 +103,7 @@
 
   let tagText: SvelteComponent;
   onMount(function () {
-    requestCardData().then((cardData: ICard) => {
+    requestCardData().then((cardData: ICard | null) => {
       card.set(cardData);
     });
   });
@@ -123,23 +129,41 @@
       e.stopPropagation();
       copyAndMessage();
     }
-    if (e.key == 'p' && !(e.metaKey || e.ctrlKey || e.shiftKey)) {
+    if (e.code == 'KeyP') {
       e.preventDefault();
       e.stopPropagation();
       $currentTool = null;
     }
-    if (e.key == 'h' && !(e.metaKey || e.ctrlKey || e.shiftKey)) {
+    if (e.code == 'KeyH') {
       e.preventDefault();
       e.stopPropagation();
       $currentTool = 'highlight';
-    } else if (e.key == 'u' && !(e.metaKey || e.ctrlKey || e.shiftKey)) {
+    } else if (e.code == 'KeyU') {
       e.preventDefault();
       e.stopPropagation();
       $currentTool = 'underline';
-    } else if (e.key == 'e' && !(e.metaKey || e.ctrlKey || e.shiftKey)) {
+    } else if (e.code == 'KeyE') {
       e.preventDefault();
       e.stopPropagation();
       $currentTool = 'eraser';
+    } else if (e.code == 'KeyS') {
+      e.preventDefault();
+      e.stopPropagation();
+      if ($shrunk) {
+        messenger.addMessage('Unshrunk paras');
+      } else {
+        messenger.addMessage('Shrunk paras');
+      }
+      $shrunk = !$shrunk;
+    } else if (e.code == 'KeyM') {
+      e.preventDefault();
+      e.stopPropagation();
+      if ($card.paras.length > 1) {
+        history.action('condenseParas', {});
+        messenger.addMessage('Merged paras');
+      } else {
+        messenger.addMessage('Paras already merged');
+      }
     }
   }
   async function animateReload() {
@@ -151,10 +175,13 @@
     // trigger reflow
     cardElement.offsetWidth;
     Promise.all([animateTime, requestCardData()]).then(
-      ([_, cardData]: [any, ICard]) => {
+      ([_, cardData]: [any, ICard | null]) => {
         messenger.addMessage('Card reset!');
 
         card.set(cardData);
+        if (cardData == null) {
+          return;
+        }
         // scroll to top
         cardElement.scrollTop = 0;
 
@@ -182,15 +209,17 @@
           ><Icon name="popout" /></Button
         >
       {/if}
-      <Button tooltip={'Copy card'} on:click={copyAndMessage}
-        ><Icon name="copy" /></Button
-      >
+      {#if $card != null}
+        <Button tooltip={'Copy card'} on:click={copyAndMessage}
+          ><Icon name="copy" /></Button
+        >
+      {/if}
       <Button on:click={animateReload} tooltip={'Reset card'}
         ><Icon name="reload" /></Button
       >
     </ButtonGroup>
   </div>
-  {#if $card}
+  {#if $card != null}
     <div class="card" on:scroll={handleScroll} bind:this={cardElement}>
       <div class="tag" class:moreWidth={context != 'popup'}>
         <Text
@@ -343,8 +372,8 @@
     justify-content: center;
   }
   .container.fixedWidth {
-    width: 400px;
-    height: 500px;
+    width: 450px;
+    height: 550px;
   }
 
   .card {
